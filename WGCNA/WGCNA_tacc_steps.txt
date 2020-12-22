@@ -1,0 +1,48 @@
+#######################################
+################ WGCNA ################
+#######################################
+scp -r /home/evelyn/Dropbox/project/bleww_final/Zoox_expr/fightzone/C/wgcna/test2/wgcna_inputC.Rdata eabbott@ls5.tacc.utexas.edu:/scratch/05410/eabbott/bleww/wgcna/tenrem
+
+#Run this indev
+idev -A tagmap -m 120
+
+#subset the variance stabilized counts for proportions of variance and expression value
+#eg put -v 0.8 to get 80% of data with highest variances
+subset_vsd_for_variance.R --v .75 --e 0.75 --i wgcna_inputC.Rdata
+
+
+#select the input
+WGCNA_INPUT="wgcna_inputC_varCut0.75_expCut0.75.Rdata"
+
+#get soft threshold
+echo "wgcna2_get_soft_threshold.R --input $WGCNA_INPUT --networkType signed" > getSoft
+
+scp -r eabbott@ls5.tacc.utexas.edu:/home1/05410/eabbott/bin/wgcna3b_step-wise_network_construction.R /home/evelyn/Dropbox/project/scripts
+
+sh getSoft
+
+scp -r eabbott@ls5.tacc.utexas.edu:/scratch/05410/eabbott/bleww/wgcna/Plots_geneDendro-3.pdf /home/evelyn/Dropbox/project/bleww_final/Zoox_expr/fightzone/C/wgcna
+
+#pick the softPower where SFT.R.sq > 0.8 or when it levels off in soft_threshold_plot1.pdf
+
+
+#run
+  echo "$runMyR ~/bin/wgcna3b_step-wise_network_construction.R \
+   --softPower 10\ #12 for durusdinium
+   --minSize 30\
+   --mergeCutoff 0.4\
+   --input $WGCNA_INPUT\
+   --nCores 24\
+   --networkType signed" > runWGCNA
+sh runWGCNA
+
+#optionally re-run with merging
+
+scp -r eabbott@ls5.tacc.utexas.edu:/scratch/05410/eabbott/bleww/wgcna/wgcna3b_manual_sft10_minModSize30_cutDpth0.4_signed.Rdata /home/evelyn/Dropbox/project/bleww_final/Zoox_expr/fightzone/C/wgcna
+#outputs:
+wgcna3b_manual_sft12_minModSize20_cutDpth0_signed.Rdata -- the wgcna output
+Clustering_module_eigengenes.pdf -- clustering tree of the modules showing how similar they are to each other for possible merging
+geneTree.pdf                     -- dendrogram of the gene clustering based on the correlation network
+Plots_geneDendro-3.pdf           -- dendrogram of the gene clustering with module color assignments underneath
+
+#also a bunch of Rplots.pdf empty files, can't stop these from appearing for some reason.
