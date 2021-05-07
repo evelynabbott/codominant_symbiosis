@@ -1,0 +1,106 @@
+  #------------------------------------------------------------------------------
+#KOG_MWU
+#------------------------------------------------------------------------------
+rm(list=ls())
+
+library(KOGMWU)
+
+setwd("~/Dropbox/project/bleww_final/scratchwork")
+data(adults.3dHeat.logFoldChange)
+data(larvae.longTerm)
+data(larvae.shortTerm)
+data(gene2kog)
+
+agene2kog = read.table("amil_gene2kogClass.tab",header=FALSE,sep = "\t")
+ggene2kog = read.table("Amil.v2.eggnogWebsite.gene2kog.tsv",header = TRUE,sep = "\t")
+load("~/Dropbox/project/bleww_final/scratchwork/KOG_minorLR_ct_ixn.Rdata")
+load("~/Dropbox/project/bleww_final/scratchwork/KOG_minorLR.Rdata")
+load("~/Dropbox/project/bleww_final/scratchwork/KOG_ct.Rdata")
+clustA = read.csv("clusterAstress_For_MWU.csv")
+clustB = read.csv("clusterBstress_For_MWU.csv")
+redmod = read.csv("MMred_goInput.csv")
+
+#minorLR
+minorLR = kog.mwu(KminorLR,agene2kog)
+minorLR
+
+#minorct
+minorct = kog.mwu(ct,agene2kog)
+minorct
+
+#minorLR ixn
+minorLR_ct_ixn = kog.mwu(Kixn, agene2kog)
+minorLR_ct_ixn
+
+#clustA stress
+clustA = kog.mwu(clustA,ggene2kog)
+clustA
+
+#clustB stress
+clustB = kog.mwu(clustB,ggene2kog)
+clustB
+
+#red module
+redmod = kog.mwu(redmod,ggene2kog)
+redmod
+
+# Analyzing adult coral response to 3-day heat stress:
+alfc.lth=kog.mwu(adults.3dHeat.logFoldChange,gene2kog) 
+alfc.lth 
+
+# coral larvae response to 5-day heat stress:
+l.lth=kog.mwu(larvae.longTerm,gene2kog)
+l.lth
+
+# coral larvae response to 4-hour heat stress 
+l.sth=kog.mwu(larvae.shortTerm,gene2kog)
+l.sth
+
+ktable=makeDeltaRanksTable(list("clustA"=clustA,"clustB"=clustB,"heated"=minorct,"minorLR"=minorLR,"minorLR-h interaction"=minorLR_ct_ixn))
+ktable = na.omit(ktable)
+pheatmap(as.matrix(ktable),clustering_distance_cols="correlation") 
+
+# exploring correlations between datasets
+pairs(ktable, lower.panel = panel.smooth, upper.panel = panel.cor)
+#?pairs
+# p-values of these correlations in the upper panel:
+pairs(ktable, lower.panel = panel.smooth, upper.panel = panel.cor.pval)
+
+panel.lm=function (x, y, col = par("col"), bg = NA, pch = par("pch"), 
+                   cex = 1, col.lmline = "red", ...) 
+{
+  points(x, y, pch = pch, col = col, bg = bg, cex = cex)
+  ok <- is.finite(x) & is.finite(y)
+  if (any(ok)) 
+    abline(lm(y[ok]~x[ok]), 
+           col = col.lmline, ...)
+}
+
+pairs(ktable, lower.panel = panel.lm, upper.panel = panel.cor, cex.labels = 1.5)
+
+# plotting individual delta-rank correlations:
+#corrPlot(x="adults.long",y="larvae.long",ktable)
+table = makeDeltaRanksTable(list()) #error
+
+corrPlot(x="heated",y="clustA",ktable)
+
+corrPlot(x="minorLR-h interaction",y="clustA",ktable)
+corrPlot(x="heated",y="clustA",ktable)
+
+corrPlot(x="minorLR",y="clustA",ktable)
+corrPlot(x="minorLR",y="clustB",ktable)
+
+
+
+#############################################################################################
+par(mfrow=c(2,2))
+corrPlot(x="minorLR",y="clustA",ktable)
+text(-650, 800, "a", cex=2)
+corrPlot(x="minorLR",y="clustB",ktable)
+text(-650, 1400, "b", cex=2)
+corrPlot(x="heated",y="clustA",ktable)
+text(-1500, 800, "c", cex=2)
+corrPlot(x="minorLR-h interaction",y="clustB",ktable)
+text(-1050, 1350, "d", cex=2)
+
+############################################################################################
