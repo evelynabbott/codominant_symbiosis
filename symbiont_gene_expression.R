@@ -4,6 +4,7 @@
 #-----------------------------------------------------------------------------------------
 #Make coldata
 #-----------------------------------------------------------------------------------------
+rm(list=ls())
 setwd("~/Dropbox/project/zooxtype_sanity_check/coldata_remake/Evelyns_study")
 
 #import coldata, counts, and zdat (zoox numbers)
@@ -83,7 +84,10 @@ library(cowplot)
 theme_set(theme_cowplot())
 
 ll=load("~/Dropbox/project/bleww_final/scratchwork/fightzone_counts.Rdata") #C counts & metadata
+#save(counts, file="~/Dropbox/project/bleww_final/scratchwork/countsC.Rdata" )
+
 #ll=load('~/Dropbox/project/bleww_final/scratchwork/fightzone_countsD.Rdata') #D counts & metadata
+#save(counts, file="~/Dropbox/project/bleww_final/scratchwork/countsD.Rdata")
 
 #make minorLR column
 coldata$minorLR=coldata$logCDratio
@@ -98,16 +102,11 @@ means=apply(cc,1,mean)
 table(means>cut)
 counts=cc[means>cut,]
 
-dds = DESeqDataSetFromMatrix(countData=counts, colData=coldata, design=~c_t*minorLR+logCcount+time)
-dds=DESeq(dds)
 
-resultsNames(dds)
-rld = vst(dds)
-vsd=assay(rld)
-colnames(vsd) = coldata$Run
+#,covariates=coldata$logCcount)
 
 #detect outliers
-vsdt=as.data.frame(t(vsd))
+vsdt=as.data.frame(t(vsd2))
 sampleTree = hclust(dist(vsdt), method = "average");
 par(cex = 0.6);
 par(mar = c(0,5,2,0))
@@ -118,10 +117,6 @@ coldata <- coldata[order(coldata$logCDratio),]
 coldata = coldata[-c(1,2,3,4,5,6,7,8,9,10),]
 keeps = row.names(coldata)
 counts = counts[,keeps]
-
-#remove batch effect of study/time point and number of counts
-library(limma)
-vsd2=removeBatchEffect(vsd,batch=coldata$time,covariates=coldata$logCcount)
 
 save(coldata,counts,vsd,vsd2,dds, file="~/Dropbox/project/bleww_final/scratchwork/fightzone.Rdata") #for C symbiont expression
 #save(coldata,counts,vsd,vsd2,dds, file="~/Dropbox/project/bleww_final/scratchwork/fightzoneD.Rdata") #for D symbiont expression
@@ -139,7 +134,7 @@ save(datExpr,datTraits,file="wgcna_inputC.Rdata") #do this twice, once for clado
 resultsNames(dds)
 
 #volcano plot
-res = results(dds, name ="minorLR")
+res = results(dds, name ="c_t_h_vs_c")
 summary(res)
 res
 sdf = data.frame(res) %>% 
@@ -170,6 +165,19 @@ goout=goout %>%
                       logP,
                       -logP)) %>%
   write_csv(path= "~/Dropbox/project/bleww_final/scratchwork/GO_fightzoneC.csv")
+
+#interaction of heat and codominance
+res = results(dds, name ="c_th.minorLR")
+goout=data.frame("gene"=rownames(res),
+                 "logP"=-log(res$pvalue,10))
+
+
+sign=res$log2FoldChange>0
+goout=goout %>% 
+  mutate(logP=if_else(sign,
+                      logP,
+                      -logP)) %>%
+  write_csv(path= "~/Dropbox/project/bleww_final/scratchwork/GO_fightzoneD_interaction.csv")
 
 
 #-----------------------------------------------------------------------------------------------
