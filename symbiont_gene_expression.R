@@ -95,6 +95,12 @@ coldata$minorLR[coldata$minorLR>0]=(-1)*coldata$minorLR[coldata$minorLR>0]
 save(counts, coldata, file = "~/Dropbox/project/bleww_final/scratchwork/fightzone_countsC.Rdata") #cladocopium
 #save(counts, coldata, file = "~/Dropbox/project/bleww_final/scratchwork/fightzone_countsD.Rdata") #durusdinium
 
+#remove outliers
+coldata <- coldata[order(coldata$logCDratio),]
+coldata = coldata[-c(1,2,3,4,5,6,7,8,9,10),]
+keeps = row.names(coldata)
+counts = counts[,keeps]                 
+                 
 #remove genes with low coverage
 cut=3
 cc=counts
@@ -102,21 +108,18 @@ means=apply(cc,1,mean)
 table(means>cut)
 counts=cc[means>cut,]
 
+dds = DESeqDataSetFromMatrix(countData=counts, colData=coldata, design=~c_t*minorLR+logCcount+pool+time)
+dds=DESeq(dds)
 
-#,covariates=coldata$logCcount)
+resultsNames(dds)
+rld = vst(dds)
+#rld = varianceStabilizingTransformation(dds)
+rld.df=assay(rld)
+colnames(rld.df) = coldata$Run
+vsd = rld.df
 
-#detect outliers
-vsdt=as.data.frame(t(vsd2))
-sampleTree = hclust(dist(vsdt), method = "average");
-par(cex = 0.6);
-par(mar = c(0,5,2,0))
-plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5, cex.axis = 1.5, cex.main = 2)
-
-#remove outliers
-coldata <- coldata[order(coldata$logCDratio),]
-coldata = coldata[-c(1,2,3,4,5,6,7,8,9,10),]
-keeps = row.names(coldata)
-counts = counts[,keeps]
+library(limma)
+vsd=removeBatchEffect(vsd,batch=coldata$time,covariates=coldata$logCcount)
 
 save(coldata,counts,vsd,vsd2,dds, file="~/Dropbox/project/bleww_final/scratchwork/fightzone.Rdata") #for C symbiont expression
 #save(coldata,counts,vsd,vsd2,dds, file="~/Dropbox/project/bleww_final/scratchwork/fightzoneD.Rdata") #for D symbiont expression
