@@ -97,7 +97,7 @@ save(counts, coldata, file = "~/Dropbox/project/bleww_final/scratchwork/fightzon
 
 #remove outliers
 coldata <- coldata[order(coldata$logCDratio),]
-coldata = coldata[-c(1,2,3,4,5,6,7,8,9,10),]
+coldata = coldata[-c(1:11),]
 keeps = row.names(coldata)
 counts = counts[,keeps]                 
                  
