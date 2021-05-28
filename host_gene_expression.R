@@ -13,7 +13,7 @@ ll=load('~/Dropbox/project/bleww_final/scratchwork/host_fightzone.Rdata')
 
 #remove the dudes that you removed for the zoox
 coldata <- coldata[order(coldata$logCDratio),]
-coldata = coldata[-c(1,2,3,4,5,6,7,8,9,10),]
+coldata = coldata[-c(1:11),]
 rownames(coldata)=coldata$Run
 keeps = row.names(coldata)
 counts = counts[,keeps]
