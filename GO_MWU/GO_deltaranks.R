@@ -34,6 +34,7 @@ data2=data2[data2$term %in% goods,]
 ress=merge(data1,data2,by="term")
 #assign colors based on genes
 
+#optional: add colors to GO terms with certain annotations. 
 ress$color = ifelse(grepl("translat|ribosom|rRNA|ribonu",ress$name.x,ignore.case = T),"red",
                     ifelse(grepl("photosy|thylak|plastid|chlorop",ress$name.x,ignore.case = T),"blue",
                            ifelse(grepl("translat|ribosom|rRNA|ribonu",ress$name.y,ignore.case = T),"red",
@@ -42,7 +43,7 @@ ress$color = ifelse(grepl("translat|ribosom|rRNA|ribonu",ress$name.x,ignore.case
 ress$Function <- ifelse(ress$color == "red", "translation",
                         ifelse(ress$color == "blue", "photosynthesis", "other"))
 
-
+#If you don't want to add colors/labels, remove color=function from ln 48, rm 50-52
 #photosynthesis/translation
 ggplot(ress, aes(x = delta.rank.x, y = delta.rank.y, color=Function))+
   #geom_point(size = 4, aes(alpha=Function))+ geom_text_repel(aes(label=name.x), size = 3, point.padding = 1)+
